@@ -1,0 +1,80 @@
+# Install necessary libraries
+!pip install pandas scikit-learn matplotlib
+
+
+
+import pandas as pd
+import urllib.request
+import zipfile
+
+# Download and extract dataset
+url = "https://www.kaggle.com/datasets/uciml/sms-spam-collection-dataset/data"
+urllib.request.urlretrieve(url, "sms-spam-collection-dataset")
+
+with zipfile.ZipFile("smsspamcollection.zip", 'r') as zip_ref:
+    zip_ref.extractall(".")
+
+# Load the dataset
+df = pd.read_csv('SMSSpamCollection', sep='\t', header=None, names=['label', 'message'])
+df.head()
+
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report
+
+# Convert labels to binary
+df['label'] = df['label'].map({'ham': 0, 'spam': 1})
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(df['message'], df['label'], test_size=0.2, random_state=42)
+
+# Convert text to TF-IDF features
+vectorizer = TfidfVectorizer(stop_words='english')
+X_train_vec = vectorizer.fit_transform(X_train)
+X_test_vec = vectorizer.transform(X_test)
+
+
+
+
+# Train Naive Bayes model
+model = MultinomialNB()
+model.fit(X_train_vec, y_train)
+
+# Predict and evaluate
+y_pred = model.predict(X_test_vec)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.2f}")
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+
+
+
+
+# test codes
+
+test_msg = ["Hey, are we still meeting for dinner tonight?"]
+test_vec = vectorizer.transform(test_msg)
+prediction = model.predict(test_vec)
+print("Spam" if prediction[0] else "Ham")
+
+# output
+Ham
+
+
+
+
+
+# some of the sample sentences
+1) Hey, are we still meeting for dinner tonight?
+2) Congratulations! You've won a free ticket to Bahamas. Claim now!
+3) Don't forget to bring the documents tomorrow.
+4) You have been selected for a $5000 Walmart gift card. Click here!
+5) Can you send me the report by EOD?
+6) URGENT! Your account will be suspended unless you verify now.
+7) Happy birthday! Wish you all the best.
+8) Get cheap meds online without prescription. Order today!
+9) Let’s catch up this weekend. It’s been a while!
+10) Win a brand new car by entering the competition now!
